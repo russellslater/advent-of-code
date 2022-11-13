@@ -10,13 +10,17 @@ import (
 
 func main() {
 	entries := getEntries("2020/day-02-password-philosophy/input.txt")
-	validCount := 0
+	firstRuleValidCount, secondRuleValidCount := 0, 0
 	for _, p := range entries {
 		if p.isValid(simpleMinMaxPolicyRule) {
-			validCount++
+			firstRuleValidCount++
+		}
+		if p.isValid(runePositionRule) {
+			secondRuleValidCount++
 		}
 	}
-	fmt.Printf("Valid passwords: %d\n", validCount)
+	fmt.Printf("%d valid passwords according to first rule\n", firstRuleValidCount)
+	fmt.Printf("%d valid passwords according to second rule\n", secondRuleValidCount)
 }
 
 type passwordPolicyRule func(p *policyEntry) bool
@@ -40,6 +44,15 @@ func simpleMinMaxPolicyRule(p *policyEntry) bool {
 		}
 	}
 	return count >= p.min && count <= p.max
+}
+
+func runePositionRule(p *policyEntry) bool {
+	if p.min <= 0 || p.max > len(p.password) {
+		return false
+	}
+	minMatch := p.password[p.min-1] == byte(p.char)
+	maxMatch := p.password[p.max-1] == byte(p.char)
+	return (minMatch && !maxMatch) || (!minMatch && maxMatch)
 }
 
 func getEntries(filename string) []*policyEntry {
