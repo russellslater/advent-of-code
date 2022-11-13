@@ -12,12 +12,14 @@ func main() {
 	entries := getEntries("2020/day-02-password-philosophy/input.txt")
 	validCount := 0
 	for _, p := range entries {
-		if p.isValid() {
+		if p.isValid(simpleMinMaxPolicyRule) {
 			validCount++
 		}
 	}
 	fmt.Printf("Valid passwords: %d\n", validCount)
 }
+
+type passwordPolicyRule func(p *policyEntry) bool
 
 type policyEntry struct {
 	min      int
@@ -26,7 +28,11 @@ type policyEntry struct {
 	password string
 }
 
-func (p *policyEntry) isValid() bool {
+func (p *policyEntry) isValid(policy passwordPolicyRule) bool {
+	return policy(p)
+}
+
+func simpleMinMaxPolicyRule(p *policyEntry) bool {
 	count := 0
 	for _, c := range p.password {
 		if c == p.char {
