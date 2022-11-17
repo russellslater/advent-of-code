@@ -30,6 +30,8 @@ var fieldRules = []string{
 	"\\b(pid:[0-9]{9})\\b",
 }
 
+type passportPolicy func(string) bool
+
 func requiredFieldsOnlyPolicy(passportContent string) bool {
 	matchedAll := true
 	for _, f := range reqFields {
@@ -56,7 +58,7 @@ type passport struct {
 	lines []string
 }
 
-func (p *passport) isValid(policy func(content string) bool) bool {
+func (p *passport) isValid(policy passportPolicy) bool {
 	content := strings.Join(p.lines, " ")
 	return policy(content)
 }
@@ -78,7 +80,7 @@ func getInputPassports(filename string) []*passport {
 	return input
 }
 
-func validPassportCount(passports []*passport, policy func(content string) bool) int {
+func validPassportCount(passports []*passport, policy passportPolicy) int {
 	count := 0
 	for _, p := range passports {
 		if p.isValid(policy) {
