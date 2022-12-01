@@ -21,6 +21,12 @@ func TopElfTotalCalories(calories []ElfCalories, top int) int {
 	for i, elf := range calories {
 		calorieCounts[i] = elf.TotalCalories()
 	}
+
 	sort.Ints(calorieCounts)
-	return calorieSum(calorieCounts[len(calorieCounts)-top:])
+
+	if top < len(calorieCounts) {
+		calorieCounts = calorieCounts[len(calorieCounts)-top:]
+	}
+
+	return calorieSum(calorieCounts)
 }

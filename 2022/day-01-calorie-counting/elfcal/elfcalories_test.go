@@ -40,6 +40,36 @@ func TestExample(t *testing.T) {
 			3,
 			45000,
 		},
+		{
+			"All counts totaled if top exceeds number of counts",
+			[]elfcal.ElfCalories{
+				{1000, 2000, 3000},
+				{4000},
+				{5000, 6000},
+				{7000, 8000, 9000},
+				{10000},
+			},
+			10,
+			55000,
+		},
+		{
+			"Top is zero",
+			[]elfcal.ElfCalories{
+				{1000, 2000, 3000},
+				{4000},
+				{5000, 6000},
+				{7000, 8000, 9000},
+				{10000},
+			},
+			0,
+			0,
+		},
+		{
+			"Empty calories",
+			[]elfcal.ElfCalories{},
+			10,
+			0,
+		},
 	}
 
 	for _, tc := range tt {
