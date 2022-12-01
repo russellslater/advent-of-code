@@ -6,7 +6,7 @@ import (
 	"github.com/matryer/is"
 )
 
-func TestPolicyEntryIsValid(t *testing.T) {
+func TestExample(t *testing.T) {
 	t.Parallel()
 
 	tt := []struct {
