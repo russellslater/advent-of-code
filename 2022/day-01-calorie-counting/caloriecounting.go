@@ -16,7 +16,7 @@ func main() {
 	fmt.Printf("Part One Answer: %d\n", top)
 
 	topThree := elfcal.TopElfTotalCalories(ec, 3)
-	fmt.Printf("Part 2 Answer: %d\n", topThree)
+	fmt.Printf("Part Two Answer: %d\n", topThree)
 }
 
 func getTransformedInput(filename string) []elfcal.ElfCalories {
