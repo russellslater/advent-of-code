@@ -23,3 +23,18 @@ func LoadInput(filename string) []string {
 
 	return input
 }
+
+func Prepend(arr []string, items []string) []string {
+	for _, item := range items {
+		arr = append([]string{item}, arr...)
+	}
+	return arr
+}
+
+func Reverse(arr []string) []string {
+	reversed := make([]string, len(arr))
+	for i, item := range arr {
+		reversed[len(arr)-1-i] = item
+	}
+	return reversed
+}
