@@ -38,6 +38,10 @@ func (c *Crane) moveCrates(stacks [][]string, mv Move) [][]string {
 func (c *Crane) result(stacks [][]string) string {
 	var b strings.Builder
 	for _, s := range stacks {
+		if len(s) == 0 {
+			b.WriteString(" ")
+			continue
+		}
 		b.WriteString(s[0])
 	}
 	return b.String()
