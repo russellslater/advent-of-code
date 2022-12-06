@@ -38,3 +38,17 @@ func Reverse(arr []string) []string {
 	}
 	return reversed
 }
+
+func Unique(arr []rune) bool {
+	if len(arr) == 0 {
+		return false
+	}
+	seen := make(map[rune]bool)
+	for _, r := range arr {
+		if seen[r] {
+			return false
+		}
+		seen[r] = true
+	}
+	return true
+}
