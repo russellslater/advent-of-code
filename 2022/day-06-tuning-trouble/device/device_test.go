@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/matryer/is"
-	"github.com/russellslater/advent-of-code/2022/day-06/device"
+	"github.com/russellslater/advent-of-code/2022/day-06-tuning-trouble/device"
 )
 
 func TestDevice(t *testing.T) {
