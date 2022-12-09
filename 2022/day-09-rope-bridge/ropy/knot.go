@@ -1,5 +1,7 @@
 package ropy
 
+import "github.com/russellslater/advent-of-code/internal/util"
+
 type position struct {
 	x int
 	y int
@@ -21,16 +23,9 @@ func NewKnot(head *Knot) *Knot {
 }
 
 func (k *Knot) isTouchingHead() bool {
-	dx := abs(k.x - k.head.x)
-	dy := abs(k.y - k.head.y)
+	dx := util.Abs(k.x - k.head.x)
+	dy := util.Abs(k.y - k.head.y)
 	return dx <= 1 && dy <= 1
-}
-
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
 }
 
 func (k *Knot) move() {

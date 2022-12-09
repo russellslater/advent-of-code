@@ -52,3 +52,10 @@ func Unique(arr []rune) bool {
 	}
 	return true
 }
+
+func Abs(num int) int {
+	if num < 0 {
+		return -num
+	}
+	return num
+}
