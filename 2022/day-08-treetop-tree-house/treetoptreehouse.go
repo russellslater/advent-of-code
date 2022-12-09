@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 
-	"github.com/russellslater/advent-of-code/2022/day-08/forestry"
+	"github.com/russellslater/advent-of-code/2022/day-08-treetop-tree-house/forestry"
 	"github.com/russellslater/advent-of-code/internal/util"
 )
 
 func main() {
-	filename := "./2022/day-08/input.txt"
+	filename := "./2022/day-08-treetop-tree-house/input.txt"
 	forest := getTransformedInput(filename)
 
 	count := forestry.CountVisibleArbores(forest)
