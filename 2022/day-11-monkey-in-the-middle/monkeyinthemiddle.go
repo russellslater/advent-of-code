@@ -19,7 +19,8 @@ func main() {
 	fmt.Printf("Part One Answer: %v\n", level)
 
 	troop = buildTroop(filename)
-	manageWorry = func(value int) int { return value % troop.LowestCommonMultiple() }
+	lcm := troop.LowestCommonMultiple()
+	manageWorry = func(value int) int { return value % lcm }
 	level = calcMonkeyBusiness(troop, manageWorry, 10_000)
 	fmt.Printf("Part Two Answer: %v\n", level)
 }
