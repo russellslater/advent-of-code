@@ -6,6 +6,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/russellslater/advent-of-code/2022/day-11-monkey-in-the-middle/cheeky"
 )
 
 func main() {
@@ -20,54 +22,6 @@ func main() {
 	manageWorry = func(value int) int { return value % troop.LowestCommonMultiple() }
 	level = calcMonkeyBusiness(troop, manageWorry, 10_000)
 	fmt.Printf("Part Two Answer: %v\n", level)
-}
-
-type Monkey struct {
-	divisor         int
-	operation       func(int) int
-	items           []int
-	receivers       []int
-	inspectionCount int
-}
-
-func NewMonkey() *Monkey {
-	return &Monkey{
-		items:     []int{},
-		receivers: []int{},
-	}
-}
-
-func (m *Monkey) AddReceiver(ordinal int) {
-	m.receivers = append(m.receivers, ordinal)
-}
-
-func (m *Monkey) AddItem(item int) {
-	m.items = append(m.items, item)
-}
-
-func (m *Monkey) InspectItems(troop Troop, worryLevel func(int) int) {
-	for len(m.items) > 0 {
-		m.SendItem(troop, worryLevel)
-	}
-}
-
-func (m *Monkey) SendItem(troop Troop, worryLevel func(int) int) {
-	if len(m.items) == 0 {
-		return
-	}
-	item := m.items[0]
-	m.items = m.items[1:]
-
-	value := m.operation(item)
-	m.inspectionCount++
-
-	value = worryLevel(value)
-
-	if value%m.divisor == 0 {
-		troop[m.receivers[0]].AddItem(value)
-	} else {
-		troop[m.receivers[1]].AddItem(value)
-	}
 }
 
 func multiply(multiplier int) func(int) int {
@@ -88,18 +42,8 @@ func add(addend int) func(int) int {
 	}
 }
 
-type Troop []*Monkey
-
-func (t Troop) LowestCommonMultiple() int {
-	lcm := 1
-	for _, monkey := range t {
-		lcm *= monkey.divisor
-	}
-	return lcm
-}
-
-func buildTroop(filename string) Troop {
-	troop := Troop{}
+func buildTroop(filename string) cheeky.Troop {
+	troop := cheeky.Troop{}
 
 	f, err := os.Open(filename)
 	if err != nil {
@@ -107,7 +51,7 @@ func buildTroop(filename string) Troop {
 	}
 	defer f.Close()
 
-	var m *Monkey
+	var m *cheeky.Monkey
 
 	s := bufio.NewScanner(f)
 	for s.Scan() {
@@ -115,7 +59,7 @@ func buildTroop(filename string) Troop {
 
 		switch {
 		case strings.HasPrefix(line, "Monkey"):
-			m = NewMonkey()
+			m = cheeky.NewMonkey()
 			troop = append(troop, m)
 		case strings.HasPrefix(line, "Starting items"):
 			for _, item := range strings.Split(strings.Split(line, ": ")[1], ", ") {
@@ -125,17 +69,17 @@ func buildTroop(filename string) Troop {
 		case strings.HasPrefix(line, "Operation"):
 			operation := strings.Split(line, ": ")[1]
 			if strings.HasPrefix(operation, "new = old * old") {
-				m.operation = square()
+				m.Operation = square()
 			} else if strings.HasPrefix(operation, "new = old * ") {
 				multiplier, _ := strconv.Atoi(strings.Split(operation, "new = old * ")[1])
-				m.operation = multiply(multiplier)
+				m.Operation = multiply(multiplier)
 			} else if strings.HasPrefix(operation, "new = old + ") {
 				addend, _ := strconv.Atoi(strings.Split(operation, "new = old + ")[1])
-				m.operation = add(addend)
+				m.Operation = add(addend)
 			}
 		case strings.HasPrefix(line, "Test"):
 			divisor, _ := strconv.Atoi(strings.Split(line, "by ")[1])
-			m.divisor = divisor
+			m.Divisor = divisor
 		case strings.HasPrefix(line, "If"):
 			monkey, _ := strconv.Atoi(strings.Split(s.Text(), "monkey ")[1])
 			m.AddReceiver(monkey)
@@ -145,7 +89,7 @@ func buildTroop(filename string) Troop {
 	return troop
 }
 
-func calcMonkeyBusiness(troop []*Monkey, manageWorry func(int) int, roundTotal int) int {
+func calcMonkeyBusiness(troop []*cheeky.Monkey, manageWorry func(int) int, roundTotal int) int {
 	highest := 0
 	secondHighest := 0
 
@@ -157,11 +101,11 @@ func calcMonkeyBusiness(troop []*Monkey, manageWorry func(int) int, roundTotal i
 				continue
 			}
 
-			if m.inspectionCount > highest {
+			if m.InspectionCount > highest {
 				secondHighest = highest
-				highest = m.inspectionCount
-			} else if m.inspectionCount > secondHighest {
-				secondHighest = m.inspectionCount
+				highest = m.InspectionCount
+			} else if m.InspectionCount > secondHighest {
+				secondHighest = m.InspectionCount
 			}
 		}
 	}
