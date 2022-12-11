@@ -1,7 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 )
 
 func main() {
@@ -22,34 +26,32 @@ type Monkey struct {
 	divisor         int
 	operation       func(int) int
 	items           []int
-	monkeys         []*Monkey
+	receivers       []int
 	inspectionCount int
 }
 
-func NewMonkey(items []int, operation func(int) int, divisor int) *Monkey {
+func NewMonkey() *Monkey {
 	return &Monkey{
-		items:     items,
-		operation: operation,
-		divisor:   divisor,
-		monkeys:   []*Monkey{},
+		items:     []int{},
+		receivers: []int{},
 	}
 }
 
-func (m *Monkey) AddMonkey(monkey ...*Monkey) {
-	m.monkeys = append(m.monkeys, monkey...)
+func (m *Monkey) AddReceiver(ordinal int) {
+	m.receivers = append(m.receivers, ordinal)
 }
 
 func (m *Monkey) AddItem(item int) {
 	m.items = append(m.items, item)
 }
 
-func (m *Monkey) InspectItems(worryLevel func(int) int) {
+func (m *Monkey) InspectItems(troop Troop, worryLevel func(int) int) {
 	for len(m.items) > 0 {
-		m.SendItem(worryLevel)
+		m.SendItem(troop, worryLevel)
 	}
 }
 
-func (m *Monkey) SendItem(worryLevel func(int) int) {
+func (m *Monkey) SendItem(troop Troop, worryLevel func(int) int) {
 	if len(m.items) == 0 {
 		return
 	}
@@ -62,9 +64,9 @@ func (m *Monkey) SendItem(worryLevel func(int) int) {
 	value = worryLevel(value)
 
 	if value%m.divisor == 0 {
-		m.monkeys[0].AddItem(value)
+		troop[m.receivers[0]].AddItem(value)
 	} else {
-		m.monkeys[1].AddItem(value)
+		troop[m.receivers[1]].AddItem(value)
 	}
 }
 
@@ -99,23 +101,46 @@ func (t Troop) LowestCommonMultiple() int {
 func buildTroop(filename string) Troop {
 	troop := Troop{}
 
-	troop = append(troop, NewMonkey([]int{57}, multiply(13), 11))
-	troop = append(troop, NewMonkey([]int{58, 93, 88, 81, 72, 73, 65}, add(2), 7))
-	troop = append(troop, NewMonkey([]int{65, 95}, add(6), 13))
-	troop = append(troop, NewMonkey([]int{58, 80, 81, 83}, square(), 5))
-	troop = append(troop, NewMonkey([]int{58, 89, 90, 96, 55}, add(3), 3))
-	troop = append(troop, NewMonkey([]int{66, 73, 87, 58, 62, 67}, multiply(7), 17))
-	troop = append(troop, NewMonkey([]int{85, 55, 89}, add(4), 2))
-	troop = append(troop, NewMonkey([]int{73, 80, 54, 94, 90, 52, 69, 58}, add(7), 19))
+	f, err := os.Open(filename)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
 
-	troop[0].AddMonkey(troop[3], troop[2])
-	troop[1].AddMonkey(troop[6], troop[7])
-	troop[2].AddMonkey(troop[3], troop[5])
-	troop[3].AddMonkey(troop[4], troop[5])
-	troop[4].AddMonkey(troop[1], troop[7])
-	troop[5].AddMonkey(troop[4], troop[1])
-	troop[6].AddMonkey(troop[2], troop[0])
-	troop[7].AddMonkey(troop[6], troop[0])
+	var m *Monkey
+
+	s := bufio.NewScanner(f)
+	for s.Scan() {
+		line := strings.TrimSpace(s.Text())
+
+		switch {
+		case strings.HasPrefix(line, "Monkey"):
+			m = NewMonkey()
+			troop = append(troop, m)
+		case strings.HasPrefix(line, "Starting items"):
+			for _, item := range strings.Split(strings.Split(line, ": ")[1], ", ") {
+				num, _ := strconv.Atoi(item)
+				m.AddItem(num)
+			}
+		case strings.HasPrefix(line, "Operation"):
+			operation := strings.Split(line, ": ")[1]
+			if strings.HasPrefix(operation, "new = old * old") {
+				m.operation = square()
+			} else if strings.HasPrefix(operation, "new = old * ") {
+				multiplier, _ := strconv.Atoi(strings.Split(operation, "new = old * ")[1])
+				m.operation = multiply(multiplier)
+			} else if strings.HasPrefix(operation, "new = old + ") {
+				addend, _ := strconv.Atoi(strings.Split(operation, "new = old + ")[1])
+				m.operation = add(addend)
+			}
+		case strings.HasPrefix(line, "Test"):
+			divisor, _ := strconv.Atoi(strings.Split(line, "by ")[1])
+			m.divisor = divisor
+		case strings.HasPrefix(line, "If"):
+			monkey, _ := strconv.Atoi(strings.Split(s.Text(), "monkey ")[1])
+			m.AddReceiver(monkey)
+		}
+	}
 
 	return troop
 }
@@ -126,7 +151,7 @@ func calcMonkeyBusiness(troop []*Monkey, manageWorry func(int) int, roundTotal i
 
 	for round := 1; round <= roundTotal; round++ {
 		for _, m := range troop {
-			m.InspectItems(manageWorry)
+			m.InspectItems(troop, manageWorry)
 
 			if round < roundTotal {
 				continue
