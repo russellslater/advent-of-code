@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"log"
 	"os"
+	"strconv"
 )
 
 func LoadInput(filename string) []string {
@@ -58,4 +59,12 @@ func Abs(num int) int {
 		return -num
 	}
 	return num
+}
+
+func MustAtoi(s string) int {
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		panic(err)
+	}
+	return i
 }
