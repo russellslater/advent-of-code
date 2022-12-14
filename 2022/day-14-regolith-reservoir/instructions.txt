@@ -154,6 +154,6 @@ To find somewhere safe to stand, you'll need to simulate falling sand until a un
 ....oooooooooo#oooooo....
 ...ooo#########ooooooo...
 ..ooooo.......ooooooooo..
-############X############
+#########################
 
 Using your scan, simulate the falling sand until the source of the sand becomes blocked. How many units of sand come to rest?
