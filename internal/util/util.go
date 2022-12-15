@@ -82,3 +82,7 @@ func Min(x, y int) int {
 	}
 	return x
 }
+
+func ManhattanDistance(x1, y1, x2, y2 int) int {
+	return Abs(x1-x2) + Abs(y1-y2)
+}
