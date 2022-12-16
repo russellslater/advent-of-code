@@ -14,6 +14,9 @@ func main() {
 
 	count := calcPositionsNotContainingBeacon(sensors, 2000000)
 	fmt.Printf("Part One Answer: %d\n", count)
+
+	freq := calcDistressSignalTuningFrequency(sensors, 4000000, 4000000)
+	fmt.Printf("Part Two Answer: %d\n", freq)
 }
 
 func getTransformedInput(filename string) []*sense.Sensor {
@@ -21,8 +24,12 @@ func getTransformedInput(filename string) []*sense.Sensor {
 	for _, line := range util.LoadInput(filename) {
 		sensor := &sense.Sensor{}
 		sensor.ClosestBeacon = &sense.Beacon{}
+
 		fmt.Sscanf(line, "Sensor at x=%d, y=%d: closest beacon is at x=%d, y=%d",
 			&sensor.X, &sensor.Y, &sensor.ClosestBeacon.X, &sensor.ClosestBeacon.Y)
+
+		sensor.MaxDistance = util.ManhattanDistance(sensor.X, sensor.Y, sensor.ClosestBeacon.X, sensor.ClosestBeacon.Y)
+
 		sensors = append(sensors, sensor)
 	}
 	return sensors
@@ -55,6 +62,7 @@ func calcPositionsNotContainingBeacon(sensors []*sense.Sensor, targetY int) int 
 	minX, maxX := findBounds(inRangeSensors)
 	noBeaconCount := 0
 
+	// Count positions that cannot contain a beacon
 	for x := minX; x <= maxX; x++ {
 		for _, s := range inRangeSensors {
 			if s.IsBeaconLocation(x, targetY) {
@@ -69,4 +77,30 @@ func calcPositionsNotContainingBeacon(sensors []*sense.Sensor, targetY int) int 
 	}
 
 	return noBeaconCount
+}
+
+func calcDistressSignalTuningFrequency(sensors []*sense.Sensor, maxX, maxY int) int {
+	// Searching for the only location that isn't in an exclusion zone
+	for y := 0; y <= maxY; y++ {
+		for x := 0; x <= maxX; x++ {
+			isExcluded := false
+			for _, s := range sensors {
+				if s.IsInRange(x, y) {
+					// Skip to end of sensors exclusion zone
+					// Distance diminishes as y-offset increases
+					skipDist := s.MaxDistance - util.Abs(s.Y-y)
+					x = s.X + skipDist
+
+					isExcluded = true
+					break
+				}
+			}
+
+			if !isExcluded {
+				return x*4000000 + y
+			}
+		}
+	}
+
+	return -1 // Not found
 }
