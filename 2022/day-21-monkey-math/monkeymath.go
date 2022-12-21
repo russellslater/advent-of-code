@@ -7,28 +7,42 @@ import (
 	"github.com/russellslater/advent-of-code/internal/util"
 )
 
-func main() {
-	filename := "./2022/day-21-monkey-math/input.txt"
-	operations, numbers := getTransformedInput(filename)
-
-	rootNum := calcRootNumber(operations, numbers)
-	fmt.Printf("Part One Answer: %v\n", rootNum)
-}
-
 const (
-	Add      = "+"
-	Subtract = "-"
-	Multiply = "*"
-	Divide   = "/"
+	RootMonkey  = "root"
+	HumanMonkey = "humn"
+	Add         = "+"
+	Subtract    = "-"
+	Multiply    = "*"
+	Divide      = "/"
 )
 
-type MonkeyOp struct {
-	Monkey1  string
-	Monkey2  string
-	Operator string
+func main() {
+	filename := "./2022/day-21-monkey-math/input.txt"
+	solver := getTransformedInput(filename)
+
+	rootNum := solver.Solve(RootMonkey)
+	fmt.Printf("Part One Answer: %v\n", rootNum)
+
+	num := solver.SolveReversed(HumanMonkey)
+	fmt.Printf("Part Two Answer: %v\n", num)
 }
 
-func getTransformedInput(filename string) (map[string]MonkeyOp, map[string]int) {
+type MonkeyMathSolver struct {
+	operations map[string]MonkeyOp
+	numbers    map[string]int // Cache for stashing pre-calculated and calcuted numbers
+}
+
+func NewMonkeyMathSolver(operations map[string]MonkeyOp, numbers map[string]int) *MonkeyMathSolver {
+	return &MonkeyMathSolver{operations: operations, numbers: numbers}
+}
+
+type MonkeyOp struct {
+	LeftMonkey  string
+	RightMonkey string
+	Operator    string
+}
+
+func getTransformedInput(filename string) *MonkeyMathSolver {
 	operations := map[string]MonkeyOp{}
 	numbers := map[string]int{}
 
@@ -36,43 +50,81 @@ func getTransformedInput(filename string) (map[string]MonkeyOp, map[string]int) 
 		parts := strings.Fields(line)
 		monkey := strings.Replace(parts[0], ":", "", -1)
 		if len(parts) == 4 {
-			operations[monkey] = MonkeyOp{Monkey1: parts[1], Monkey2: parts[3], Operator: parts[2]}
+			operations[monkey] = MonkeyOp{LeftMonkey: parts[1], RightMonkey: parts[3], Operator: parts[2]}
 		} else {
 			numbers[monkey] = util.MustAtoi(parts[1])
 		}
 	}
-	return operations, numbers
+	return NewMonkeyMathSolver(operations, numbers)
 }
 
-func calcRootNumber(operations map[string]MonkeyOp, numbers map[string]int) int {
-	for {
-		for monkey, op := range operations {
-			if _, ok := numbers[monkey]; ok {
-				continue
-			}
+func (m *MonkeyMathSolver) Solve(targetMonkey string) int {
+	if num, ok := m.numbers[targetMonkey]; ok {
+		return num
+	}
 
-			if _, ok := numbers[op.Monkey1]; !ok {
-				continue
-			}
+	op := m.operations[targetMonkey]
+	left := m.Solve(op.LeftMonkey)
+	right := m.Solve(op.RightMonkey)
 
-			if _, ok := numbers[op.Monkey2]; !ok {
-				continue
-			}
+	switch op.Operator {
+	case Add:
+		return left + right
+	case Subtract:
+		return left - right
+	case Multiply:
+		return left * right
+	case Divide:
+		return left / right
+	}
 
-			switch op.Operator {
-			case Add:
-				numbers[monkey] = numbers[op.Monkey1] + numbers[op.Monkey2]
-			case Subtract:
-				numbers[monkey] = numbers[op.Monkey1] - numbers[op.Monkey2]
-			case Multiply:
-				numbers[monkey] = numbers[op.Monkey1] * numbers[op.Monkey2]
-			case Divide:
-				numbers[monkey] = numbers[op.Monkey1] / numbers[op.Monkey2]
-			}
-		}
+	return 0
+}
 
-		if rootNum, ok := numbers["root"]; ok {
-			return rootNum
+func (m *MonkeyMathSolver) SolveReversed(targetMonkey string) int {
+	// Find the monkey whose number is the result of the target monkey
+	for monkey, op := range m.operations {
+		// Is the target monkey the left or right operand?
+		if op.LeftMonkey == targetMonkey {
+			rightOperand := m.Solve(op.RightMonkey) // Right operand can be calculated simply
+			if monkey == RootMonkey {
+				return rightOperand // Left and right are equal!
+			} else {
+				result := m.SolveReversed(monkey) // Go all the way back up to the root monkey
+
+				// Rearrange the equation to get the left operand
+				switch op.Operator {
+				case Add:
+					return result - rightOperand // result = left + right -> left = result - right
+				case Subtract:
+					return result + rightOperand // result = left - right -> left = result + right
+				case Multiply:
+					return result / rightOperand // result = left * right -> left = result / right
+				case Divide:
+					return result * rightOperand // result = left / right -> left = result * right
+				}
+			}
+		} else if op.RightMonkey == targetMonkey {
+			leftOperand := m.Solve(op.LeftMonkey) // Left operand can be calculated simply
+			if monkey == RootMonkey {
+				return leftOperand // Left and right are equal!
+			} else {
+				result := m.SolveReversed(monkey) // Go all the way back up to the root monkey
+
+				// Rearrange the equation to get the right operand
+				switch op.Operator {
+				case Add:
+					return result - leftOperand // result = left + right -> right = result - left
+				case Subtract:
+					return leftOperand - result // result = left - right -> right = left - result
+				case Multiply:
+					return result / leftOperand // result = left * right -> right = result / left
+				case Divide:
+					return leftOperand / result // result = left / right -> right = left / result
+				}
+			}
 		}
 	}
+
+	return 0
 }
