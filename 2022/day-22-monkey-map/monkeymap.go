@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/russellslater/advent-of-code/2022/day-22-monkey-map/jungle"
 	"github.com/russellslater/advent-of-code/internal/util"
 )
 
@@ -10,24 +11,13 @@ func main() {
 	filename := "./2022/day-22-monkey-map/input.txt"
 	board, moves := getTransformedInput(filename)
 
-	password := calcFinalPassword(board, moves)
+	g := jungle.NewGame(board, moves)
+
+	password := g.CalcFinalPassword()
 	fmt.Printf("Part One Answer: %v\n", password)
 }
 
-type Move struct {
-	Turn Turn
-	Step int
-}
-
-type Turn int
-
-const (
-	None Turn = iota
-	CW
-	CCW
-)
-
-func getTransformedInput(filename string) ([][]rune, []Move) {
+func getTransformedInput(filename string) ([][]rune, []jungle.Move) {
 	board := [][]rune{}
 	lines := util.LoadInput(filename)
 	maxRowLength := 0
@@ -54,20 +44,20 @@ func getTransformedInput(filename string) ([][]rune, []Move) {
 	return board, parseMoves(lines[len(lines)-1])
 }
 
-func parseMoves(line string) []Move {
-	moves := []Move{}
+func parseMoves(line string) []jungle.Move {
+	moves := []jungle.Move{}
 	numChars := ""
 
 	for _, c := range line {
 		if c == 'R' || c == 'L' {
 			if numChars != "" {
-				moves = append(moves, Move{Turn: None, Step: util.MustAtoi(numChars)})
+				moves = append(moves, jungle.Move{Steps: util.MustAtoi(numChars)})
 				numChars = ""
 			}
 			if c == 'R' {
-				moves = append(moves, Move{Turn: CW})
+				moves = append(moves, jungle.ClockwiseTurn)
 			} else {
-				moves = append(moves, Move{Turn: CCW})
+				moves = append(moves, jungle.CounterclockwiseTurn)
 			}
 		} else {
 			numChars += string(c)
@@ -75,16 +65,9 @@ func parseMoves(line string) []Move {
 	}
 
 	if numChars != "" {
-		moves = append(moves, Move{Turn: None, Step: util.MustAtoi(numChars)})
+		moves = append(moves, jungle.Move{Steps: util.MustAtoi(numChars)})
 		numChars = ""
 	}
 
 	return moves
-}
-
-func calcFinalPassword(board [][]rune, moves []Move) int {
-	fmt.Println(board)
-	fmt.Println(moves)
-
-	return 0
 }
