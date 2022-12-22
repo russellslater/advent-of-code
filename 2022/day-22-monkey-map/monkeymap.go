@@ -30,12 +30,28 @@ const (
 func getTransformedInput(filename string) ([][]rune, []Move) {
 	board := [][]rune{}
 	lines := util.LoadInput(filename)
+	maxRowLength := 0
+
 	for _, line := range lines[:len(lines)-2] {
-		// TODO: All rows could be the same length for simplicity
+		if len(line) > maxRowLength {
+			maxRowLength = len(line)
+		}
 		board = append(board, []rune(line))
 	}
-	moves := parseMoves(lines[len(lines)-1])
-	return board, moves
+
+	// Resize rows to be the same length and replace spaces with 0s
+	for i := range board {
+		for len(board[i]) < maxRowLength {
+			board[i] = append(board[i], 0)
+		}
+		for j, c := range board[i] {
+			if c == ' ' {
+				board[i][j] = 0
+			}
+		}
+	}
+
+	return board, parseMoves(lines[len(lines)-1])
 }
 
 func parseMoves(line string) []Move {
