@@ -11,10 +11,17 @@ func main() {
 	filename := "./2022/day-22-monkey-map/input.txt"
 	board, moves := getTransformedInput(filename)
 
-	g := jungle.NewGame(board, moves)
-
-	password := g.CalcFinalPassword()
+	twoDimensionalGame := jungle.New2DGame(board, moves)
+	password := twoDimensionalGame.CalcFinalPassword()
 	fmt.Printf("Part One Answer: %v\n", password)
+
+	// Note: Did not attempt a general purpose solution for Part Two
+	// that would work for any input. There are multiple configurations
+	// for 6 squares to fold into a cube.
+
+	threeDimensionalGame := jungle.New3DGame(board, moves)
+	password = threeDimensionalGame.CalcFinalPassword()
+	fmt.Printf("Part Two Answer: %v\n", password)
 }
 
 func getTransformedInput(filename string) ([][]rune, []jungle.Move) {
