@@ -13,8 +13,11 @@ func main() {
 
 	g := grove.NewGame(grid)
 
-	emptyTileCount := g.Solve()
+	emptyTileCount := g.SolveForEmptyTiles(10)
 	fmt.Printf("Part One Answer: %v\n", emptyTileCount)
+
+	rounds := g.SolveForFirstRoundNoMovement()
+	fmt.Printf("Part Two Answer: %v\n", rounds)
 }
 
 func getTransformedInput(filename string) [][]rune {
