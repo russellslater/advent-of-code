@@ -11,7 +11,7 @@ func (s Shape) Height() int {
 }
 
 var (
-	// 	####
+	// ####
 	Pancake = Shape{
 		{'@', '@', '@', '@'},
 	}
