@@ -16,3 +16,12 @@ func (b BlizzardSet) Contains(o Blizzard) bool {
 	_, ok := b[o]
 	return ok
 }
+
+func (b BlizzardSet) ContainsPosition(p Position) bool {
+	for blizzard := range b {
+		if blizzard.Position == p {
+			return true
+		}
+	}
+	return false
+}

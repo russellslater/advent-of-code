@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/russellslater/advent-of-code/2022/day-24-blizzard-basin/bliz"
 	"github.com/russellslater/advent-of-code/internal/util"
@@ -11,25 +12,16 @@ func main() {
 	filename := "./2022/day-24-blizzard-basin/input.txt"
 	basin := getTransformedInput(filename)
 
-	// Debugging
-	w, h := basin.InternalWidthHeight()
-	fmt.Println("Internal Width/Height", w, h)
+	t := time.Now()
 
-	fmt.Println("Basin at t=0")
-	basin.PrintAtTime(0)
-
-	fmt.Println("Basin at t=1")
-	basin.PrintAtTime(1)
-
-	fmt.Printf("Basin at t=%d\n", w*h)
-	basin.PrintAtTime(w * h)
-
-	output := basin.FastestTraversal()
-	fmt.Printf("Part One Answer: %v\n", output)
+	fastestTime := basin.FastestTraversal()
+	fmt.Printf("Part One Answer: %d (%s)\n", fastestTime, time.Since(t))
 }
 
 func getTransformedInput(filename string) *bliz.Basin {
-	basin := bliz.NewBasin()
+	walls := bliz.WallSet{}
+	blizzards := bliz.BlizzardSet{}
+	var start, end bliz.Position
 
 	y := 0
 	var prev rune
@@ -38,7 +30,7 @@ func getTransformedInput(filename string) *bliz.Basin {
 		prev = 0
 		for _, char := range line {
 			if char == '#' {
-				basin.Walls.Add(bliz.Position{X: x, Y: y})
+				walls.Add(bliz.Position{X: x, Y: y})
 			} else if char == '<' || char == '>' || char == '^' || char == 'v' {
 				dx := 0
 				dy := 0
@@ -52,12 +44,12 @@ func getTransformedInput(filename string) *bliz.Basin {
 				case 'v':
 					dy = 1
 				}
-				basin.Blizzards.Add(bliz.Position{X: x, Y: y}, dx, dy)
+				blizzards.Add(bliz.Position{X: x, Y: y}, dx, dy)
 			} else if char == '.' && prev == '#' {
 				if y == 0 {
-					basin.Start = bliz.Position{X: x, Y: y}
+					start = bliz.Position{X: x, Y: y}
 				} else {
-					basin.End = bliz.Position{X: x, Y: y}
+					end = bliz.Position{X: x, Y: y}
 				}
 			}
 			prev = char
@@ -66,5 +58,5 @@ func getTransformedInput(filename string) *bliz.Basin {
 		y++
 	}
 
-	return basin
+	return bliz.NewBasin(start, end, walls, blizzards)
 }

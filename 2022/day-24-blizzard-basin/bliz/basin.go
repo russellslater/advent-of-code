@@ -6,21 +6,28 @@ import (
 )
 
 type Basin struct {
-	Walls           WallSet
-	Blizzards       BlizzardSet
 	Start           Position
 	End             Position
-	BlizzardsByTime map[int]BlizzardSet
+	InternalWidth   int
+	InternalHeight  int
+	Walls           WallSet
+	Blizzards       BlizzardSet
+	blizzardsByTime map[int]BlizzardSet
 }
 
-func NewBasin() *Basin {
-	return &Basin{
-		Walls:     WallSet{},
-		Blizzards: BlizzardSet{},
+func NewBasin(start, end Position, walls WallSet, blizzards BlizzardSet) *Basin {
+	b := &Basin{
+		Start:     start,
+		End:       end,
+		Walls:     walls,
+		Blizzards: blizzards,
 	}
+	b.InternalWidth, b.InternalHeight = b.internalWidthHeight()
+	b.precomputeBlizzardPositions()
+	return b
 }
 
-func (b *Basin) InternalWidthHeight() (int, int) {
+func (b *Basin) internalWidthHeight() (int, int) {
 	minX := math.MaxInt
 	maxX := math.MinInt
 	minY := math.MaxInt
@@ -44,66 +51,60 @@ func (b *Basin) InternalWidthHeight() (int, int) {
 	return maxX - minX - 1, maxY - minY - 1
 }
 
-func (b *Basin) PrecomputeBlizzardPositions() {
-	w, h := b.InternalWidthHeight()
-	lcm := w * h
+func (b *Basin) precomputeBlizzardPositions() {
+	// Pattern convienently repeats every w * h units of time
+	lcm := b.InternalWidth * b.InternalHeight
 
-	b.BlizzardsByTime = map[int]BlizzardSet{}
+	b.blizzardsByTime = map[int]BlizzardSet{}
 
 	for blizzard := range b.Blizzards {
 		for t := 0; t < lcm; t++ {
-			if _, ok := b.BlizzardsByTime[t]; !ok {
-				b.BlizzardsByTime[t] = BlizzardSet{}
+			if _, ok := b.blizzardsByTime[t]; !ok {
+				b.blizzardsByTime[t] = BlizzardSet{}
 			}
 
-			newPosX := (blizzard.Position.X + blizzard.DX*t) % w
-			newPosY := (blizzard.Position.Y + blizzard.DY*t) % h
+			newPosX := (blizzard.Position.X + blizzard.DX*t) % b.InternalWidth
+			newPosY := (blizzard.Position.Y + blizzard.DY*t) % b.InternalHeight
 
 			// Wrap around
 			if newPosX <= 0 {
-				newPosX += 100
+				newPosX += b.InternalWidth
 			}
-			if newPosX > 100 {
-				newPosX %= 100
+			if newPosX > b.InternalWidth {
+				newPosX %= b.InternalWidth
 				newPosX++
 			}
 
 			if newPosY <= 0 {
-				newPosY += 35
+				newPosY += b.InternalHeight
 			}
-			if newPosY > 35 {
-				newPosY %= 35
+			if newPosY > b.InternalHeight {
+				newPosY %= b.InternalHeight
 				newPosY++
 			}
 
-			b.BlizzardsByTime[t].Add(Position{X: newPosX, Y: newPosY}, blizzard.DX, blizzard.DY)
+			b.blizzardsByTime[t].Add(Position{X: newPosX, Y: newPosY}, blizzard.DX, blizzard.DY)
 		}
 	}
 }
 
-func (b *Basin) FastestTraversal() int {
-	return 0
-}
-
 func (b *Basin) PrintAtTime(time int) {
-	if b.BlizzardsByTime == nil {
-		b.PrecomputeBlizzardPositions()
+	if b.blizzardsByTime == nil {
+		b.precomputeBlizzardPositions()
 	}
 
 	// Pattern repeats every w * h
-	w, h := b.InternalWidthHeight()
-	lcm := w * h
+	lcm := b.InternalWidth * b.InternalHeight
 
-	if blizzards, ok := b.BlizzardsByTime[time%lcm]; ok {
+	if blizzards, ok := b.blizzardsByTime[time%lcm]; ok {
 		b.Print(blizzards)
 	}
 }
 
 func (b *Basin) Print(blizzards BlizzardSet) {
-	// TODO: Print not account for overlapping blizzards - likely unimportant for solution
-	w, h := b.InternalWidthHeight()
-	for y := 0; y < h+2; y++ {
-		for x := 0; x < w+2; x++ {
+	// Print does not account for overlapping blizzards; unimportant for solution
+	for y := 0; y < b.InternalHeight+2; y++ {
+		for x := 0; x < b.InternalWidth+2; x++ {
 			if b.Walls.Contains(Position{X: x, Y: y}) {
 				fmt.Print("#")
 			} else if blizzards.Contains(Blizzard{Position{X: x, Y: y}, -1, 0}) {
@@ -124,4 +125,67 @@ func (b *Basin) Print(blizzards BlizzardSet) {
 		}
 		fmt.Println()
 	}
+}
+
+type State struct {
+	Position Position
+	Time     int
+}
+
+func (b *Basin) FastestTraversal() int {
+	if b.blizzardsByTime == nil {
+		b.precomputeBlizzardPositions()
+	}
+
+	queue := []State{{b.Start, 0}}
+	visited := make(map[State]bool, 0)
+
+	for len(queue) > 0 {
+		state := queue[0]
+		queue = queue[1:]
+
+		for _, nextState := range b.nextPossibleStates(state) {
+			if visited[nextState] {
+				continue
+			}
+
+			// Reached end state?
+			if nextState.Position == b.End {
+				return nextState.Time
+			}
+
+			visited[nextState] = true
+			queue = append(queue, nextState)
+		}
+	}
+
+	return -1
+}
+
+func (b *Basin) nextPossibleStates(state State) []State {
+	nextStates := []State{}
+
+	currPos := state.Position
+	time := state.Time
+
+	blizzards := b.blizzardsByTime[time+1]
+
+	neighbours := append(currPos.Neighbours(), currPos)
+
+	// Possible moves
+	for _, neighbour := range neighbours {
+		if b.Walls.Contains(neighbour) {
+			continue
+		}
+		if blizzards.ContainsPosition(neighbour) {
+			continue
+		}
+		// Cannot move out of bounds
+		if neighbour.X < 1 || neighbour.X > b.InternalWidth || neighbour.Y < 0 || neighbour.Y > b.InternalHeight+1 {
+			continue
+		}
+		nextStates = append(nextStates, State{neighbour, time + 1})
+	}
+
+	return nextStates
 }
