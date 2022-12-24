@@ -16,6 +16,11 @@ func main() {
 
 	fastestTime := basin.FastestTraversal()
 	fmt.Printf("Part One Answer: %d (%s)\n", fastestTime, time.Since(t))
+
+	t = time.Now()
+
+	fastestTime = basin.FastestThereAndBackTraversal()
+	fmt.Printf("Part Two Answer: %d (%s)\n", fastestTime, time.Since(t))
 }
 
 func getTransformedInput(filename string) *bliz.Basin {

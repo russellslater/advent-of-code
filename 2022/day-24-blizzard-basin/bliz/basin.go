@@ -133,11 +133,15 @@ type State struct {
 }
 
 func (b *Basin) FastestTraversal() int {
+	return b.bfs(b.Start, b.End, 0)
+}
+
+func (b *Basin) bfs(start Position, end Position, time int) int {
 	if b.blizzardsByTime == nil {
 		b.precomputeBlizzardPositions()
 	}
 
-	queue := []State{{b.Start, 0}}
+	queue := []State{{start, time}}
 	visited := make(map[State]bool, 0)
 
 	for len(queue) > 0 {
@@ -150,7 +154,7 @@ func (b *Basin) FastestTraversal() int {
 			}
 
 			// Reached end state?
-			if nextState.Position == b.End {
+			if nextState.Position == end {
 				return nextState.Time
 			}
 
@@ -160,6 +164,21 @@ func (b *Basin) FastestTraversal() int {
 	}
 
 	return -1
+}
+
+func (b *Basin) FastestThereAndBackTraversal() int {
+	totalTime := 0
+	starts := []Position{b.Start, b.End, b.Start}
+	ends := []Position{b.End, b.Start, b.End}
+
+	for i := 0; i < len(starts); i++ {
+		totalTime = b.bfs(starts[i], ends[i], totalTime)
+		if totalTime == -1 {
+			return -1
+		}
+	}
+
+	return totalTime
 }
 
 func (b *Basin) nextPossibleStates(state State) []State {
